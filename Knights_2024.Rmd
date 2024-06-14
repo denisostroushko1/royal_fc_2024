@@ -181,7 +181,7 @@ flexdashboard::valueBox(value = val, caption = cap, color = "green", icon = "fa-
 
 ```{R}
 
-val <- scores %>% filter(Action == "Goal") %>% select(Player) %>% unique() %>% nrow()
+val <- scores %>% filter(Action == "Goal") %>% filter(Player != "Own Goal") %>% select(Player) %>% unique() %>% nrow()
 
 cap <- paste0("Players with 1+ Goals")
 
@@ -909,14 +909,14 @@ scores %>% filter(Action == "Goal") %>%
 goals_to_viz <- 
   left_join(goals_to_viz, 
             scores %>% filter(Action == "Assist") %>% 
-              select(Date, Opponent, Score, Player, `Pass Type`, `Loc Y`, `Loc X`) %>% 
+              select(Date, Opponent, Score, Player, `Pass Type`, `Loc Y`, `Loc X`, Hudson) %>% 
               rename(Assit_prov = Player, 
                      Assist_X = `Loc X`, 
-                     Assist_Y = `Loc Y`
+                     Assist_Y = `Loc Y`, 
+                     Assist_Hudson = Hudson
                      ), 
             by = c("Date", "Opponent", "Score")
-            ) %>% 
-  filter(Origin != "Own Goal")
+            ) 
 
 
 
@@ -1045,34 +1045,37 @@ Column {data-width=400}
 
 ### Description
 
+#### *All descriptions were meant to sound like Ray Hudson*
+
 ```{r}
-
-
-output$message <- 
-  renderText(
-
-    case_when(
-      goals_to_viz %>% filter(handle == input$select_goal) %>% select(Position) %>% unlist() == "Outside the Box" ~ 
-        "BOOOOOOOM. A banger from downtown", 
-      T ~ "Great goal!"
-    ) %>% print()  
-  )
-
-# output$message <- renderText(print("HELLO"))
-textOutput('message')
-
+HTML("<br>")
 ```
-
-**If I remeber it correctly...**
 
 ```{r}
 
-output$message_goal <- renderText(
-  goals_to_viz %>% filter(handle == input$select_goal) %>% select(Message) %>% unlist()
-)
+output$text_assist <- renderText({
+  m = goals_to_viz %>% filter(handle == input$select_goal) %>% select(Assist_Hudson) %>% unlist()
+  
+  ifelse(is.na(m), "", m)
+})
 
-textOutput('message_goal')
+output$text_goal <- renderText({
+  goals_to_viz %>% filter(handle == input$select_goal) %>% select(Hudson) %>% unlist()
+})
+
+textOutput('text_assist')
+
 ```
+
+```{r}
+HTML("<br>")
+```
+
+```{r}
+textOutput('text_goal')
+```
+
+
 
 Raw Data 
 === 
